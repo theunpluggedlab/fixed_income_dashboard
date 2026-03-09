@@ -50,18 +50,18 @@ with tab1:
     # Get today's date as the absolute limit for the slider/select
     today = pd.to_datetime(datetime.now().date())
     
-    # Still define the last 365 days ending today
-    date_options = pd.date_range(end=today, periods=365, freq='D')
+    # Define the last 365 days ending today, then reverse so the latest is first
+    date_options = pd.date_range(end=today, periods=365, freq='D')[::-1]
     
     # Find the best default: the latest date that actually has data (DGS10)
     data_max_date = load_data('DGS10').index.max()
     
     # Calculate initial index: find where data_max_date is in date_options
-    # If not found (e.g., data is very old), default to today (last index) or 0
     try:
+        # Since it's reversed, index 0 is today, and later indices are older dates
         initial_index = date_options.get_loc(data_max_date)
     except (KeyError, ValueError):
-        initial_index = len(date_options) - 1 # Default to today if data is missing
+        initial_index = 0 # Default to the first item (today) if data is missing
 
     selected_date = st.sidebar.selectbox(
         'Select Date (for Treasury Yield Curve)',
