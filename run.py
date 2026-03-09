@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -46,12 +47,26 @@ with tab1:
     st.header('Yield Curves')
     col1, col2 = st.columns(2)
 
-    latest_date = max([load_data('DGS10').index.max()])  # Assumes DGS10 exists
-    date_options = pd.date_range(end=latest_date, periods=365, freq='D')  # Last year
+    # Get today's date as the absolute limit for the slider/select
+    today = pd.to_datetime(datetime.now().date())
+    
+    # Still define the last 365 days ending today
+    date_options = pd.date_range(end=today, periods=365, freq='D')
+    
+    # Find the best default: the latest date that actually has data (DGS10)
+    data_max_date = load_data('DGS10').index.max()
+    
+    # Calculate initial index: find where data_max_date is in date_options
+    # If not found (e.g., data is very old), default to today (last index) or 0
+    try:
+        initial_index = date_options.get_loc(data_max_date)
+    except (KeyError, ValueError):
+        initial_index = len(date_options) - 1 # Default to today if data is missing
+
     selected_date = st.sidebar.selectbox(
         'Select Date (for Treasury Yield Curve)',
         options=date_options,
-        index=0,
+        index=int(initial_index),
         format_func=lambda x: x.strftime('%Y-%m-%d'),
     )
 
