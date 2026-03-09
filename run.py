@@ -32,9 +32,9 @@ treasury_series = [
     'DGS20',
     'DGS30',
 ]
-corporate_series = ['AAA', 'BAA']
+corporate_series = ['TLT', 'LQD']
 trend_series = ['DGS10', 'T10Y2Y']
-portfolio_series = ['DGS1', 'DGS5', 'DGS10', 'BAA']
+portfolio_series = ['DGS1', 'DGS5', 'DGS10', 'LQD']
 
 # Tab layout
 tab1, tab2, tab3, tab4 = st.tabs(
@@ -78,49 +78,66 @@ with tab1:
         else:
             st.warning('Sorry... No data has been found for this day. Try another one!')
 
-    # ESG Proxy (Corporate vs Treasury)
-    with col2:
-        st.subheader('Corporate vs Treasury (ESG Proxy)')
+        # ETF vs Treasury Comparison
+        with col2:
+            st.subheader('ETF Prices vs 10Y Treasury Yield')
 
-        # Define the series to load
-        corporate_series = ['AAA', 'BAA']
-        treasury_series = ['DGS10']
-        all_series = corporate_series + treasury_series
+            # Define the series to load
+            etf_series = ['TLT', 'LQD']
+            treasury_series = ['DGS10']
+            all_series = etf_series + treasury_series
 
-        # Load data for each series
-        esg_yields = {}
-        for series in all_series:
-            df = load_data(series)  # Replace with your actual data loading function
-            esg_yields[series] = df
+            # Load data for each series
+            esg_yields = {}
+            for series in all_series:
+                df = load_data(series)  # Replace with your actual data loading function
+                esg_yields[series] = df
 
-        # Check if data was loaded
-        if esg_yields:
-            # Create figure with consistent size (width, height)
-            fig, ax = plt.subplots(figsize=(8, 6))  # Match width=8, height=6
+            # Check if data was loaded
+            if esg_yields:
+                # Create figure with consistent size (width, height)
+                fig, ax = plt.subplots(figsize=(8, 6))  # Match width=8, height=6
 
-            # Define labels and colors
-            labels = ['Aaa (High ESG)', 'Baa (Lower ESG)', '10Y Treasury']
-            color_map = {'AAA': 'blue', 'BAA': 'red', 'DGS10': 'green'}
+                # Define labels, mapped by specific indices or manually
+                labels = ['TLT (Treasury Bond ETF)', 'LQD (Corp Bond ETF)', '10Y Treasury Yield']
+                color_map = {'TLT': 'blue', 'LQD': 'red', 'DGS10': 'green'}
 
-            # Plot each series
-            for i, series in enumerate(['AAA', 'BAA', 'DGS10']):
-                df = esg_yields[series]
-                ax.plot(
-                    df.index,
-                    df['yield'],
-                    color=color_map[series],
-                    label=labels[i],
-                    alpha=0.6,
-                )
+                # Plot DGS10 on primary axis
+                df_treasury = esg_yields['DGS10']
+                if 'yield' in df_treasury.columns:
+                    ax.plot(
+                        df_treasury.index,
+                        df_treasury['yield'],
+                        color=color_map['DGS10'],
+                        label=labels[2],
+                        alpha=0.6,
+                    )
+                ax.set_ylabel('Yield (%)', color='green')
+                ax.tick_params(axis='y', labelcolor='green')
 
-            # Customize the plot
-            ax.set_ylabel('Yield (%)')
-            ax.set_title('ESG Proxy Yields (over time)')
-            ax.legend()
-            ax.grid(True, linestyle='--', alpha=0.7)
+                # Plot ETFs on secondary axis
+                ax2 = ax.twinx()
+                for i, series in enumerate(['TLT', 'LQD']):
+                    df = esg_yields[series]
+                    if 'price' in df.columns:
+                        ax2.plot(
+                            df.index,
+                            df['price'],
+                            color=color_map[series],
+                            label=labels[i],
+                            alpha=0.6,
+                        )
+                ax2.set_ylabel('ETF Price ($)')
 
-            # Display the plot in Streamlit
-            st.pyplot(fig)
+                # Customize the plot
+                ax.set_title('ETF Prices vs 10Y Treasury (over time)')
+                lines1, labels1 = ax.get_legend_handles_labels()
+                lines2, labels2 = ax2.get_legend_handles_labels()
+                ax.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+                ax.grid(True, linestyle='--', alpha=0.7)
+
+                # Display the plot in Streamlit
+                st.pyplot(fig)
 
 # Tab 2: Historical Trends
 with tab2:
@@ -364,9 +381,9 @@ with tab4:
         'DGS20',
         'DGS30',
     ]
-    corporate_series = ['AAA', 'BAA']
+    corporate_series = ['TLT', 'LQD']
     trend_series = ['DGS10', 'T10Y2Y']
-    portfolio_series = ['DGS1', 'DGS5', 'DGS10', 'BAA']
+    portfolio_series = ['DGS1', 'DGS5', 'DGS10', 'LQD']
 
     # Create a dictionary with explanations
     bond_explanations = {
@@ -381,8 +398,8 @@ with tab4:
             'DGS10',
             'DGS20',
             'DGS30',
-            'AAA',
-            'BAA',
+            'TLT',
+            'LQD',
             'T10Y2Y',
         ],
         'Description': [
@@ -396,8 +413,8 @@ with tab4:
             '10-Year Treasury Constant Maturity Rate',
             '20-Year Treasury Constant Maturity Rate',
             '30-Year Treasury Constant Maturity Rate',
-            "Moody's Seasoned Aaa Corporate Bond Yield (highest credit quality)",
-            "Moody's Seasoned Baa Corporate Bond Yield (lower investment-grade quality)",
+            'iShares 20+ Year Treasury Bond ETF',
+            'iShares iBoxx $ Inv Grade Corporate Bond ETF',
             '10-Year Treasury minus 2-Year Treasury Yield Spread (yield curve indicator)',
         ],
         'Category': [
@@ -411,8 +428,8 @@ with tab4:
             'Treasury',
             'Treasury',
             'Treasury',
-            'Corporate',
-            'Corporate',
+            'ETF',
+            'ETF',
             'Trend',
         ],
     }
